@@ -1,6 +1,6 @@
 import re
 import os
-from tkinter import Tk, filedialog, messagebox
+from tkinter import Tk, messagebox
 
 # Funzione per convertire il file VTT in TXT
 def convert_vtt_to_txt(vtt_file, output_txt):
@@ -16,40 +16,49 @@ def convert_vtt_to_txt(vtt_file, output_txt):
                 if not re.match(r'^\d+$', line) and not re.match(r'^\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}$', line) and line.strip():
                     output.write(line.strip() + ' ')  # Aggiungi spazio per migliorare la leggibilità
 
-        messagebox.showinfo("Successo", f"Conversione completata! Il file è stato salvato come '{output_txt}'")
     except Exception as e:
         messagebox.showerror("Errore", f"Si è verificato un errore: {e}")
 
-# Funzione per aprire il file .vtt e avviare la conversione
-def select_file():
+# Funzione per convertire tutti i file VTT nella cartella 'vtt'
+def convert_all_vtt_in_folder():
     # Ottenere la cartella in cui si trova il file dello script
     script_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Aprire una finestra per selezionare il file .vtt con la cartella corrente come directory iniziale
-    file_path = filedialog.askopenfilename(
-        title="Seleziona il file VTT", 
-        filetypes=[("VTT files", "*.vtt")],
-        initialdir=script_dir  # Imposta la cartella di avvio
-    )
+    # Impostare la cartella 'vtt' come directory di input
+    input_dir = os.path.join(script_dir, 'vtt')
     
-    if file_path:
-        # Creare la cartella 'txt' se non esiste
-        output_dir = os.path.join(script_dir, 'txt')
-        os.makedirs(output_dir, exist_ok=True)
-        
-        # Generare il nome per il file di output .txt nella cartella 'txt'
-        output_txt = os.path.join(output_dir, os.path.splitext(os.path.basename(file_path))[0] + ".txt")
-        
-        # Convertire il file .vtt in .txt
-        convert_vtt_to_txt(file_path, output_txt)
+    # Creare la cartella 'txt' se non esiste
+    output_dir = os.path.join(script_dir, 'txt')
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Controllare se la cartella 'vtt' esiste
+    if not os.path.exists(input_dir):
+        messagebox.showerror("Errore", f"La cartella '{input_dir}' non esiste.")
+        return
+    
+    # Trovare tutti i file .vtt nella cartella 'vtt'
+    vtt_files = [f for f in os.listdir(input_dir) if f.endswith('.vtt')]
+    
+    if not vtt_files:
+        messagebox.showinfo("Nessun file", "Non ci sono file .vtt nella cartella 'vtt'.")
+        return
+    
+    # Convertire ogni file .vtt in un file .txt
+    for vtt_file in vtt_files:
+        vtt_file_path = os.path.join(input_dir, vtt_file)
+        output_txt_path = os.path.join(output_dir, os.path.splitext(vtt_file)[0] + '.txt')
+        convert_vtt_to_txt(vtt_file_path, output_txt_path)
+    
+    messagebox.showinfo("Successo", f"Conversione completata! I file sono stati salvati nella cartella '{output_dir}'.")
 
-# Funzione principale per avviare l'interfaccia
+# Funzione principale per avviare il processo di conversione
 def main():
-    # Creare la finestra principale
+    # Creare la finestra principale (necessaria per visualizzare i messaggi)
     root = Tk()
     root.withdraw()  # Nascondere la finestra principale
-    messagebox.showinfo("VTT to TXT Converter", "Seleziona un file VTT per la conversione.")
-    select_file()
+    
+    # Avviare la conversione
+    convert_all_vtt_in_folder()
 
 # Esegui la funzione principale
 if __name__ == "__main__":
